@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Incremancer Savegame Editor</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      padding: 20px;
+    }
+
+    #dropZone {
+      border: 2px dashed #888;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 900px;
+      padding: 30px;
+      text-align: center;
+      background-color: #1e1e1e;
+      margin-bottom: 20px;
+    }
+
+    #dropZone.hover {
+      border-color: #00ffcc;
+    }
+
+    #editor {
+      width: 100%;
+      max-width: 900px;
+      background-color: #1a1a1a;
+      padding: 20px;
+      border-radius: 12px;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+
+    label {
+      display: block;
+      margin: 6px 0 2px;
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: none;
+      background-color: #2a2a2a;
+      color: #eee;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #00c2a8;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #00ffcc;
+    }
+
+    .group {
+      margin-left: 20px;
+      border-left: 2px solid #333;
+      padding-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="dropZone">
+    <h2>🧠 Incremancer Savegame Editor</h2>
+    <p>Ziehe dein Savegame (Text oder .txt-Datei) hierher</p>
+  </div>
+
+  <form id="editor"></form>
+  <button id="downloadBtn" style="display:none;">💾 Geändertes Savegame herunterladen</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const editorForm = document.getElementById('editor');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    let saveData = {};
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('hover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('hover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('hover');
+
+      const data = e.dataTransfer.getData("text/plain");
+      if (data && data.length > 100) {
+        decodeAndBuildUI(data.trim());
+      } else if (e.dataTransfer.files.length) {
+        const file = e.dataTransfer.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          decodeAndBuildUI(event.target.result.trim());
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    function decodeAndBuildUI(encoded) {
+      try {
+        const decoded = LZString.decompressFromEncodedURIComponent(encoded);
+        saveData = JSON.parse(decoded);
+        editorForm.innerHTML = '';
+        buildFormFromObject(saveData, editorForm);
+        downloadBtn.style.display = 'inline-block';
+      } catch (err) {
+        editorForm.innerHTML = "<p>❌ Fehler beim Dekodieren: " + err.message + "</p>";
+        downloadBtn.style.display = 'none';
+      }
+    }
+
+    function buildFormFromObject(obj, parent, path = '') {
+      Object.keys(obj).forEach(key => {
+        const fullPath = path ? `${path}.${key}` : key;
+        const value = obj[key];
+
+        const label = document.createElement('label');
+        label.textContent = key;
+        parent.appendChild(label);
+
+        if (typeof value === 'object' && value !== null) {
+          const group = document.createElement('div');
+          group.className = 'group';
+          parent.appendChild(group);
+          buildFormFromObject(value, group, fullPath);
+        } else {
+          const input = document.createElement('input');
+          input.type = typeof value === 'number' ? 'number' : 'text';
+          input.value = value;
+          input.dataset.path = fullPath;
+          input.addEventListener('input', updateSaveData);
+          parent.appendChild(input);
+        }
+      });
+    }
+
+    function updateSaveData(e) {
+      const path = e.target.dataset.path.split('.');
+      let target = saveData;
+      for (let i = 0; i < path.length - 1; i++) {
+        target = target[path[i]];
+      }
+      const key = path[path.length - 1];
+      const newValue = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
+      target[key] = isNaN(newValue) ? e.target.value : newValue;
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      try {
+        const jsonString = JSON.stringify(saveData);
+        const encoded = LZString.compressToEncodedURIComponent(jsonString);
+        const blob = new Blob([encoded], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'savegame.sav';
+        a.click();
+
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("Fehler beim Erstellen der Datei: " + err.message);
+      }
+    });
+  </script>
+
+</body>
+</html>
