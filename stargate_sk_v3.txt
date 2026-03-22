@@ -1,0 +1,335 @@
+Trading Strategy — STARGATE SK v3
+
+⚠️ WARNING: This strategy combines the STARGATE risk framework with the SK-System (Sequence Structure + Fibonacci Retracement + Fibonacci Extension + Liquidation Heatmap + Volume Profile Confluence), but in a simplified and more executable format. It is not independently audited and must be forward-tested before live deployment. No system has a 100% hit rate — this system works with probabilities, confluence, and strict risk control.
+
+## Core Philosophy
+
+- Markets move in waves: impulse → correction → impulse — in both directions
+- Always analyze top-down: Weekly → Daily → 4H → 1H
+- Never draw a sequence before activation — only after the A-Point is confirmed broken
+- Confluence matters, but only a small number of factors should drive execution
+- The strategy trades specific levels, not vague zones
+- “No setup” is a valid and correct decision
+- The goal is not to catch every move, but to catch high-quality moves with controlled risk
+
+## Rules
+
+1. Only trade BTC — no altcoins unless the strategy is explicitly expanded
+2. Max leverage: 3x Long / 2x Short — no exceptions
+3. Max risk per trade: 1.5% of capital for standard setups / 2.0% for A+ setups — if the stop loss would lose more, reduce position size
+4. Max open positions: 2 — one per direction max, only one short position at a time
+5. Max daily drawdown: 6% — stop trading for the day if hit
+6. Max total drawdown: 12% — reduce all position sizes by 50%
+7. Max total drawdown: 20% — A+ setups only, no shorts
+8. Max total drawdown: 30% — stop all trading immediately and review the strategy
+9. After 3 consecutive losses — pause new entries for 24 hours
+10. Never increase size to recover losses — never average down
+11. Never trade against the Weekly regime — no exceptions
+12. Minimum CRV (risk-reward ratio): 3:1 — do not enter if the CRV is below 3:1
+
+## SK-System — Fibonacci Tool Settings
+
+### Fibonacci Retracement (Entry Zone Identification)
+
+Use the following retracement levels:
+
+- 50.0% — primary entry
+- 55.9% — secondary entry
+- 61.8% — golden ratio entry
+- 66.7% — final zone entry
+- 78.6% — stop-loss reference
+
+The active entry zone spans from 50.0% to 66.7%.
+
+### Fibonacci Extension (Target Identification)
+
+Use the following extension levels:
+
+- 161.8% — TP2 minimum sequence target
+- 180.9% — intermediate SK target
+- 200.0% — final sequence target
+
+The active target zone spans from 161.8% to 200.0%.
+
+## Sequence Logic
+
+### Bullish Sequence
+
+1. Zero Point = swing low
+2. Impulse up creates the A-Point
+3. Correction down creates the B-Point — must hold above Zero Point
+4. Sequence activates only when price breaks above the A-Point
+5. The TCL Buy Zone is measured with Fibonacci Retracement from Zero to A
+6. The extension target is projected with Fibonacci Extension from Zero → A → B
+
+### Bearish Sequence
+
+1. Zero Point = swing high
+2. Impulse down creates the A-Point
+3. Correction up creates the B-Point — must hold below Zero Point
+4. Sequence activates only when price breaks below the A-Point
+5. The TCL Short Zone is measured with Fibonacci Retracement from Zero to A
+6. The extension target is projected with Fibonacci Extension from Zero → A → B
+
+### Sequence Rule
+
+- Never draw a sequence before activation
+- Never assume an A-Point break before it actually happens
+- If the A-Point is not broken, there is no active sequence and no trade
+
+## Confluence Framework
+
+Only use 3 primary confluence groups for decision-making:
+
+### Primary Confluences (required)
+
+1. Active sequence structure
+2. Fibonacci entry level inside the TCL zone
+3. Regime alignment (Weekly + Daily + 4H)
+
+### Secondary Confluences (optional confirmation)
+
+- Liquidation cluster inside the entry zone
+- Weekly or Daily key level
+- Point of Control (Volume Profile)
+- 50 EMA or 200 EMA on 4H
+- Wick fill / imbalance retest
+
+### Setup Quality
+
+- A+ Setup = Primary Confluences + at least 2 strong secondary confluences
+- Standard Setup = Primary Confluences + at least 1 meaningful secondary confluence
+
+## Market Mode Rules
+
+- WAIT MODE: If ATR(14) is below its 30-bar baseline, ADX(14) is below 20, or the 24h moving average is flat — do not open breakout or sequence trades
+- BREAKOUT MODE: If ATR(14) is above its 30-bar baseline, volume is above the 24h average, and price breaks the last 24h range — breakout trades are allowed
+- SEQUENCE MODE: If ADX(14) is above 25, 4H structure confirms direction, and an active sequence exists — pullback entries at Fibonacci levels are allowed
+- If 2 or more risk-off signals appear together — reduce size by 50% and only take A+ setups
+- If 3 or more risk-off signals appear together — switch fully to WAIT MODE
+
+## Regime Filter
+
+Check Weekly, Daily, and 4H before every trade — this is mandatory.
+
+### Bullish Inputs
+
+- Weekly structure bullish (HH / HL)
+- Daily close above 50-day moving average
+- 4H structure bullish (HH / HL intact)
+
+### Bearish Inputs
+
+- Weekly structure bearish (LH / LL)
+- Daily close below 50-day moving average
+- 4H structure bearish (LH / LL intact)
+
+### Regime Score
+
+- 3x bullish = Long A+ setup allowed
+- 2x bullish = Long standard setup allowed
+- 1x bullish or less = WAIT, no long trade
+- 3x bearish = Short A+ setup allowed
+- 2x bearish = Short standard setup allowed
+- 1x bearish or less = WAIT, no short trade
+
+Do not trade Long in a bearish Weekly regime.
+Do not trade Short in a bullish Weekly regime.
+
+## Entry Rules
+
+### Long — Sequence Entry
+
+- Regime minimum 2x bullish
+- Active bullish sequence present
+- A-Point confirmed broken
+- Price has entered the TCL Buy Zone (50.0% to 66.7%)
+- At least 1 additional confluence factor present
+- Enter level by level within the zone — not with one oversized order
+- Preferred order of levels: 50.0% → 55.9% → 61.8% → 66.7%
+
+### Long — Trigger Confirmation
+
+Enter only when price is in the level and one of the following objective triggers appears on 1H or 15m:
+
+- bullish engulfing candle
+- rejection wick with close back above the level
+- local structure break upward after touch
+- volume spike in favor of the reversal
+
+If no trigger appears, no entry.
+
+### Long — Breakout Entry
+
+- Regime minimum 2x bullish
+- BREAKOUT MODE active
+- Close above the highest high of the last 24 bars
+- ATR expansion confirmed
+- Volume above 24h average
+- Active bullish sequence confirms breakout direction
+
+### Short — Sequence Entry
+
+- Regime minimum 2x bearish
+- Active bearish sequence present
+- A-Point confirmed broken
+- Price has entered the TCL Short Zone (50.0% to 66.7%)
+- At least 1 additional confluence factor present
+- Enter level by level within the zone: 50.0% → 55.9% → 61.8% → 66.7%
+
+### Short — Trigger Confirmation
+
+Enter only when price is in the level and one of the following objective triggers appears on 1H or 15m:
+
+- bearish engulfing candle
+- rejection wick with close back below the level
+- local structure break downward after touch
+- volume spike in favor of the reversal
+
+If no trigger appears, no entry.
+
+### Short — Breakdown Entry
+
+- Regime minimum 2x bearish
+- BREAKOUT MODE active
+- Close below the lowest low of the last 24 bars
+- ATR expansion confirmed
+- Volume above 24h average
+
+### General Entry Filters
+
+- Do not enter if price is already more than 2 ATR away from the 24h moving average
+- Do not enter if no active sequence exists
+- Do not draw sequences speculatively
+- Minimum CRV must be 3:1 before any entry is taken
+
+## Exit Rules
+
+### Stop Loss
+
+- Place the stop loss just beyond the 78.6% retracement of the active sequence
+- If trading individual levels, the stop can be placed just beyond the next level for tighter risk
+- Stop loss must always be placed immediately after entry
+
+### Break-Even Rule
+
+- Move stop to break-even only after price has moved 2x the initial stop-loss distance in your favor
+- Never move stop earlier
+
+### Take Profit 1
+
+- Take partial profit when price has moved 3x the initial stop-loss distance in your favor
+- Close 25% to 50% of the position
+
+### Take Profit 2
+
+- Close an additional 25% at the 161.8% Fibonacci Extension
+
+### Take Profit 3
+
+- Close an additional 25% at the 180.9% Fibonacci Extension
+
+### Runner
+
+- Keep the remaining position open for the 200.0% Fibonacci Extension
+- Use a 2x ATR trailing stop or exit on 4H structure break, whichever happens first
+
+### Time Stop
+
+- If the position has not made meaningful progress after 48 hours, close it at market
+
+## Position Sizing
+
+- Risk amount = 1.5% of current equity for standard setups / 2.0% for A+ setups
+- If trading multiple levels within a zone, split total risk across all planned entries
+- Example: 1.5% total zone risk across 4 levels = 0.375% risk per level
+- Position size = Risk amount ÷ (Entry price × Stop loss %)
+- Apply leverage after calculating position size
+- Max leverage: 3x for Longs / 2x for Shorts
+- If required leverage exceeds the maximum, reduce position size until it fits
+- Never exceed the risk limits regardless of conviction
+
+## Drawdown Early Warning
+
+Treat the market as risk-off if 2 or more of the following are true:
+
+- ATR(14) falls below its 30-bar baseline
+- ADX(14) falls below 20
+- 24h moving average slope flattens sharply
+- A breakout fails within 6 bars
+- Two consecutive stopped trades occur in the same mode
+
+In risk-off mode:
+
+- Reduce position size by 50%
+- Only take A+ setups
+- No re-entry in the same direction for 12 hours unless a fresh breakout appears
+
+If 3 or more are true:
+
+- Switch completely to WAIT MODE
+
+## A+ Setup Definition
+
+An A+ setup requires all of the following:
+
+- 3x regime score
+- Active confirmed sequence
+- Entry level inside the TCL zone
+- At least 2 strong secondary confluences
+- ATR expansion at entry
+- Volume confirms the move
+- CRV at least 3:1
+- Market is not in WAIT MODE
+- Daily and total drawdown limits are not hit
+
+## What NOT To Do
+
+- Don't trade in WAIT MODE
+- Don't chase overextended candles
+- Don't average down
+- Don't move stop to break-even before the 2x SL-distance threshold
+- Don't draw sequences before activation
+- Don't overtrade — “no setup” is a valid decision
+- Don't re-enter immediately after a stop loss unless a completely new signal appears
+- Don't force Longs in a bearish Weekly regime
+- Don't force Shorts in a bullish Weekly regime
+- Don't revenge trade after losses
+- Don't use secondary indicators as primary signals — sequence structure and Fibonacci levels come first
+- Don't take any trade with CRV below 3:1
+
+## Execution Checklist
+
+### Regime & Structure
+
+- [ ] Weekly regime identified and aligned with trade direction
+- [ ] Daily regime confirms
+- [ ] 4H structure confirms
+- [ ] Active sequence present
+- [ ] A-Point is confirmed broken
+
+### Entry Zone
+
+- [ ] Price is inside the TCL Fibonacci zone
+- [ ] Specific entry level identified
+- [ ] At least 1 additional confluence present
+- [ ] Liquidation Heatmap checked if available
+- [ ] No major opposing liquidity cluster directly against the trade
+
+### Trigger
+
+- [ ] Bullish or bearish trigger candle / structure break / volume confirmation appears at the level
+- [ ] Entry is not overextended
+- [ ] CRV is at least 3:1
+
+### Risk & Execution
+
+- [ ] Risk is within allowed equity %
+- [ ] If using multiple levels, total zone risk is split correctly
+- [ ] Market is not in WAIT MODE
+- [ ] ATR expansion is present
+- [ ] Stop loss placed immediately
+- [ ] Break-even level calculated
+- [ ] TP1, TP2, TP3, and runner target defined
+
+If any critical item is unchecked → NO TRADE
